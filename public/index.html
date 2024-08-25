@@ -1,43 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fancy Search Widget</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+</head>
+<body style="background-color: #f8f9fa; padding: 20px;">
+  <div id="fancy-widget"></div>
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+  <script src="../build/static/js/main.js"></script>
+  <script>
+    const config = {
+      useCaseId: '12345',
+      promptId: '67890',
+      apiKey: 'ya29.a0AcM612yESdBoB0AvQ_yNV8MXSbuttmxkI0VsLHU51oOEnuvPbrZbI0vE8qbPMFxhms1jai7taohCmLVTO4I1dbw3vnPq-TVgOE-__JY-VokyDqGF-cH3w9KqLrwbJBopo6Oq99qGjPY4UEsfsf-25Fu_owMm3v9t_nIVzGpe9gh5Zg2HfgPTOlf6bsNTGsAvMVpK-Y5zj8Z6Q6flmzaDnVGgScNLVL-66gqKvX5M9DSwrRqgsITfR6Qbjn1ChzIvTzLQYjTawWtI438mAhFPMsqWTQEuBKbedhUIvPgvObJZ1S-WeUQBS4hOKQGXlNmE51Aj9M2iFqmh1Ui3cbljEeHoClPAwDAFhjWOreRyWFrCQTPqWOo0u1zFAfE3whKVqb3qvc4oGNMQgjIPlFeGVI7mQIIaCgYKAcMSARASFQHGX2MimXCfeDULp-BHCMFJ-GUKsA0418',
+      apiUrl: 'https://api.example.com/search'
+    };
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+    SearchWidget('fancy-widget', config);
+  </script>
+</body>
 </html>
