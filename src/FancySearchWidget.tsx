@@ -6,13 +6,15 @@ import {
   List,
   Paper,
   Divider,
+  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import BookIcon from '@mui/icons-material/Book';
 import { styled } from '@mui/system';
-import CustomLoading from './CustomLoading';  // Import the loading component
+import CustomLoading from './CustomLoading';
 
-// Define interfaces for props and state
 interface FancySearchWidgetProps {
   useCaseId?: string;
   promptId?: string;
@@ -27,7 +29,11 @@ interface SearchResult {
   book_hyperlink: string;
 }
 
-// Define styled components with TypeScript
+interface Conversation {
+  query: string;
+  results: SearchResult[];
+}
+
 const SearchContainer = styled(Box)({
   display: 'flex',
   alignItems: 'center',
@@ -46,6 +52,24 @@ const SearchInput = styled(TextField)({
     borderRadius: '24px',
     backgroundColor: '#fff',
   },
+});
+
+const QuestionBox = styled(Box)({
+  backgroundColor: '#e8f0fe',
+  padding: '10px 15px',
+  borderRadius: '12px',
+  marginBottom: '10px',
+  border: '1px solid #c5cae9',
+  display: 'inline-block',
+  textAlign: 'right',
+});
+
+const ResultBox = styled(Box)({
+  backgroundColor: '#f9f9f9',
+  padding: '15px',
+  borderRadius: '12px',
+  marginBottom: '10px',
+  border: '1px solid #e0e0e0',
 });
 
 const SectionTitle = styled(Typography)({
@@ -71,19 +95,6 @@ const ReferenceLink = styled(Typography)({
   marginTop: '10px',
 });
 
-const ResultCard = styled(Paper)({
-  padding: '20px',
-  marginBottom: '20px',
-  borderRadius: '10px',
-  backgroundColor: '#f9f9f9',
-  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-  transition: 'transform 0.2s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)',
-    boxShadow: '0px 6px 15px rgba(0, 0, 0, 0.2)',
-  },
-});
-
 const FancySearchWidget: React.FC<FancySearchWidgetProps> = ({
   useCaseId: initialUseCaseId = '',
   promptId: initialPromptId = '',
@@ -95,25 +106,46 @@ const FancySearchWidget: React.FC<FancySearchWidgetProps> = ({
   const [apiKey, setApiKey] = useState<string>(initialApiKey);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isAppending, setIsAppending] = useState<boolean>(false);
+
+  const mockData: SearchResult[] = [
+    {
+      section_title: 'Mock Section Title 1',
+      context: 'This is some mock presentation context with <b>HTML</b> tags.',
+      book: 'Mock Book 1',
+      book_hyperlink: 'https://example.com/book1',
+    },
+    {
+      section_title: 'Mock Section Title 2',
+      context: 'Another mock context. <i>More HTML tags</i> can be included here.',
+      book: 'Mock Book 2',
+      book_hyperlink: 'https://example.com/book2',
+    },
+    {
+      section_title: 'Mock Section Title 3',
+      context: 'Final mock data. It includes <u>underline</u> and other tags.',
+      book: 'Mock Book 3',
+      book_hyperlink: 'https://example.com/book3',
+    },
+  ];
 
   const handleSearch = async (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       setLoading(true);
-      setResults([]); // Clear previous results
 
       try {
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`, // Use the apiKey in the headers
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
             useCaseId: useCaseId,
             promptId: promptId,
-            query: searchQuery, // The entered search string
+            query: searchQuery,
           }),
         });
 
@@ -122,34 +154,46 @@ const FancySearchWidget: React.FC<FancySearchWidgetProps> = ({
         }
 
         const data = await response.json();
-        setResults(data.result); // Assuming the API returns a 'result' array
+        const newResults = data.result as SearchResult[]; // Assuming the API returns a 'result' array
+
+        const newConversation: Conversation = {
+          query: searchQuery,
+          results: newResults,
+        };
+
+        if (isAppending) {
+          setConversations((prevConversations) => [...prevConversations, newConversation]);
+        } else {
+          setConversations([newConversation]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
-        // Use mock data in case of error
-        setResults([
-          {
-            section_title: 'Mock Section Title 1',
-            context: 'This is some mock presentation context with <b>HTML</b> tags.',
-            book: 'Mock Book 1',
-            book_hyperlink: 'https://example.com/book1',
-          },
-          {
-            section_title: 'Mock Section Title 2',
-            context: 'Another mock context. <i>More HTML tags</i> can be included here.',
-            book: 'Mock Book 2',
-            book_hyperlink: 'https://example.com/book2',
-          },
-          {
-            section_title: 'Mock Section Title 3',
-            context: 'Final mock data. It includes <u>underline</u> and other tags.',
-            book: 'Mock Book 3',
-            book_hyperlink: 'https://example.com/book3',
-          },
-        ]);
+        // Use mock data in case of an error
+        const newConversation: Conversation = {
+          query: searchQuery,
+          results: mockData,
+        };
+        if (isAppending) {
+          setConversations((prevConversations) => [...prevConversations, newConversation]);
+        } else {
+          setConversations([newConversation]);
+        }
       } finally {
         setLoading(false);
+        setIsAppending(false); // Reset appending state after search
       }
     }
+  };
+
+  const handleAskFollowUp = () => {
+    setIsAppending(true);
+    setSearchQuery(''); // Clear the search input field
+  };
+
+  const handleAskNewQuestion = () => {
+    setSearchQuery(''); // Clear the search input field
+    setConversations([]); // Clear previous conversations
+    setIsAppending(false);
   };
 
   return (
@@ -202,29 +246,54 @@ const FancySearchWidget: React.FC<FancySearchWidgetProps> = ({
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch} // Trigger search on Enter key
+            onKeyDown={handleSearch}
           />
         </SearchContainer>
       </form>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={handleAskFollowUp}
+          sx={{ borderRadius: '24px', padding: '10px 20px' }}
+        >
+          Ask A Follow-Up
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={handleAskNewQuestion}
+          sx={{ borderRadius: '24px', padding: '10px 20px' }}
+        >
+          Ask A New Question
+        </Button>
+      </Box>
       {loading && <CustomLoading />}
-      {!loading && results.length > 0 && (
-        <Typography variant="body2" color="textSecondary" sx={{ marginBottom: '20px' }}>
-          Showing {results.length} result{results.length > 1 ? 's' : ''}
-        </Typography>
-      )}
       <List>
-        {results.map((result, index) => (
-          <ResultCard key={index}>
-            <SectionTitle>{result.section_title}</SectionTitle>
-            <ContextText dangerouslySetInnerHTML={{ __html: result.context }} />
-            {result.book_hyperlink && (
-              <ReferenceLink component="a" href={result.book_hyperlink} target="_blank" rel="noopener noreferrer">
-                <BookIcon sx={{ marginRight: '5px' }} />
-                {result.book}
-              </ReferenceLink>
-            )}
-            {index < results.length - 1 && <Divider sx={{ marginTop: '20px' }} />}
-          </ResultCard>
+        {conversations.map((conversation, index) => (
+          <React.Fragment key={index}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <QuestionBox>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
+                  {conversation.query}
+                </Typography>
+              </QuestionBox>
+            </Box>
+            {conversation.results.map((result, resultIndex) => (
+              <ResultBox key={resultIndex}>
+                <SectionTitle>{result.section_title}</SectionTitle>
+                <ContextText dangerouslySetInnerHTML={{ __html: result.context }} />
+                {result.book_hyperlink && (
+                  <ReferenceLink component="a" href={result.book_hyperlink} target="_blank" rel="noopener noreferrer">
+                    <BookIcon sx={{ marginRight: '5px' }} />
+                    {result.book}
+                  </ReferenceLink>
+                )}
+                {resultIndex < conversation.results.length - 1 && <Divider sx={{ marginTop: '20px' }} />}
+              </ResultBox>
+            ))}
+            {index < conversations.length - 1 && <Divider sx={{ margin: '20px 0' }} />}
+          </React.Fragment>
         ))}
       </List>
     </Box>
