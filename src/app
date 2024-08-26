@@ -1,0 +1,14 @@
+  <AppBar position="static" sx={{ backgroundColor: '#3f51b5' }}>
+        <Toolbar>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
+            <img
+              src="/path-to-your-logo.png" // Replace with your logo's path
+              alt="Logo"
+              style={{ height: '40px', marginRight: '10px' }}
+            />
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
+              Use Case: {useCaseId || 'N/A'}
+            </Typography>
+          </Box>
+        </Toolbar>
+      </AppBar>
