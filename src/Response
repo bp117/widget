@@ -1,0 +1,43 @@
+{
+
+"status": "OK",
+
+"graph_template": {
+
+"graphTypeId": "irgraph",
+
+"graphType": "IR",
+
+"graphParams": [
+
+{
+
+"fieldName": "results_count",
+
+"fieldType": "int",
+
+"fieldDisplayName": "No. of Search Results"
+
+},
+
+{
+
+}
+
+"fieldName": "use_reranker",
+
+"fieldType": "boolean",
+
+"fieldDisplayName": "Use Re-Ranker"
+
+1,
+
+"createdDate": "2024-08-30T08:47:07.101000",
+
+"createdBy": "Higgs.ai",
+
+"id": "66d1870b679b55a0bd570647"
+
+}
+
+}
