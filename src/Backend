@@ -1,0 +1,49 @@
+from pydantic import BaseModel
+from typing import Optional
+
+class IRParams(BaseModel):
+    usecaseId: str
+    graphType: str = "IR"
+    results_count: Optional[int] = None
+    use_reranker: Optional[bool] = None
+
+class RAGParams(BaseModel):
+    usecaseId: str
+    graphType: str = "RAG"
+    document_id: Optional[str] = None
+    context_size: Optional[int] = None
+    model_type: Optional[str] = None
+
+class ChatbotParams(BaseModel):
+    usecaseId: str
+    graphType: str = "Chatbot"
+    bot_name: Optional[str] = None
+    language: Optional[str] = None
+
+
+from fastapi import FastAPI, HTTPException
+from pymongo import MongoClient
+from models import IRParams, RAGParams, ChatbotParams
+
+app = FastAPI()
+
+client = MongoClient("mongodb://localhost:27017")
+db = client['graph_configs']
+collection = db['configs']
+
+@app.post("/save-config")
+async def save_config(config: IRParams | RAGParams | ChatbotParams):
+    try:
+        result = collection.insert_one(config.dict())
+        return {"status": "success", "inserted_id": str(result.inserted_id)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/get-config")
+async def get_config(usecaseId: str, graphType: str):
+    config = collection.find_one({"usecaseId": usecaseId, "graphType": graphType})
+    if config:
+        return config
+    else:
+        raise HTTPException(status_code=404, detail="Configuration not found")
