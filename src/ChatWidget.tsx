@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
   TextField,
-  Button,
   List,
   ListItem,
-  ListItemText,
   Paper,
   IconButton,
   CircularProgress,
@@ -15,14 +13,24 @@ import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
 
 interface ChatMessage {
-  user: string;
+  user: 'You' | 'Bot';
   text: string;
 }
 
-const ChatbotWidget: React.FC = () => {
+interface ChatbotWidgetProps {
+  onLoad?: () => void;
+}
+
+const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLoad }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (onLoad) {
+      onLoad();
+    }
+  }, [onLoad]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -51,22 +59,30 @@ const ChatbotWidget: React.FC = () => {
       <Typography variant="h6" gutterBottom>
         Chatbot
       </Typography>
-      <Paper sx={{ maxHeight: 300, overflow: 'auto', p: 2 }}>
+      <Paper sx={{ maxHeight: 300, overflow: 'auto', p: 2, bgcolor: '#f5f5f5' }}>
         <List>
           {messages.map((message, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={message.text}
-                secondary={message.user}
+            <ListItem
+              key={index}
+              sx={{
+                display: 'flex',
+                justifyContent: message.user === 'You' ? 'flex-end' : 'flex-start',
+                mb: 1,
+              }}
+            >
+              <Box
                 sx={{
-                  textAlign: message.user === 'You' ? 'right' : 'left',
-                  wordBreak: 'break-word',
-                  backgroundColor: message.user === 'You' ? '#e0f7fa' : '#e8f5e9',
+                  maxWidth: '70%',
+                  bgcolor: message.user === 'You' ? '#DCF8C6' : '#ECECEC',
+                  p: 1.5,
                   borderRadius: 2,
-                  padding: 1,
-                  marginBottom: 1,
+                  wordBreak: 'break-word',
                 }}
-              />
+              >
+                <Typography variant="body2" sx={{ fontWeight: message.user === 'You' ? 'bold' : 'normal' }}>
+                  {message.text}
+                </Typography>
+              </Box>
             </ListItem>
           ))}
         </List>
