@@ -1,14 +1,218 @@
-  <AppBar position="static" sx={{ backgroundColor: '#3f51b5' }}>
-        <Toolbar>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <img
-              src="/path-to-your-logo.png" // Replace with your logo's path
-              alt="Logo"
-              style={{ height: '40px', marginRight: '10px' }}
-            />
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
-              Use Case: {useCaseId || 'N/A'}
-            </Typography>
-          </Box>
-        </Toolbar>
-      </AppBar>
+import React, { useState, useRef } from 'react';
+import {
+  Box,
+  Grid,
+  Typography,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  TextField,
+  Checkbox,
+  FormControlLabel,
+  createTheme,
+  ThemeProvider,
+  CssBaseline,
+  CircularProgress,
+  Autocomplete,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+} from '@mui/material';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import FileCopyOutlinedIcon from '@mui/icons-material/FileCopyOutlined';
+
+const App: React.FC = () => {
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [parameters, setParameters] = useState<any[]>([]);
+  const [useCase, setUseCase] = useState<string>('');
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [widgetParams, setWidgetParams] = useState<any>({});
+  const [showWidget, setShowWidget] = useState<boolean>(false);
+  const [widgetLoaded, setWidgetLoaded] = useState<boolean>(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState<boolean>(false);
+  const [helpContent, setHelpContent] = useState<string>('');
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false); // State for Snackbar
+
+  const handleHelpClick = (content: string) => {
+    setHelpContent(content);
+    setHelpDialogOpen(true);
+  };
+
+  const handleHelpDialogClose = () => {
+    setHelpDialogOpen(false);
+  };
+
+  const handleCopyHelpContent = () => {
+    navigator.clipboard.writeText(helpContent);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  const handleSaveConfiguration = async () => {
+    if (!selectedTemplate || !useCase) {
+      alert("Please select a use case and a template.");
+      return;
+    }
+
+    const config = {
+      usecaseId: useCase,
+      graphType: selectedTemplate,
+      ...parameters.reduce((acc, param) => {
+        acc[param.fieldName] = param.value;
+        return acc;
+      }, {}),
+    };
+
+    try {
+      const response = await axios.post('http://localhost:8000/save-config', config);
+      if (response.data.status === 'success') {
+        setSnackbarOpen(true); // Show the Snackbar on success
+      }
+    } catch (error) {
+      console.error('Failed to save configuration:', error);
+      alert("Failed to save configuration.");
+    }
+  };
+
+  // ... other code ...
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ height: '100vh', padding: '20px' }}>
+        {/* Other components */}
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            {/* Use case selection and Template cards */}
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              selectedTemplate && parameters.length > 0 && (
+                <Box sx={{ marginTop: '20px' }}>
+                  <Typography variant="h6">{selectedTemplate} Parameters</Typography>
+                  {parameters.map((param, index) => (
+                    param.fieldName === 'rag_prompt_template' ? (
+                      <Autocomplete
+                        key={param.fieldName}
+                        options={promptTemplateOptions}
+                        getOptionLabel={(option) => option.label}
+                        value={promptTemplateOptions.find(option => option.value === param.value) || null}
+                        onChange={(event, newValue) => handleParameterChange(index, newValue ? newValue.value : '')}
+                        renderInput={(params) => (
+                          <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                            <TextField
+                              {...params}
+                              label={param.fieldDisplayName}
+                              variant="outlined"
+                              fullWidth
+                            />
+                            <Tooltip title="Click for examples">
+                              <IconButton onClick={() => handleHelpClick("Examples for 'rag_prompt_template'...")}>
+                                <HelpOutlineIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        )}
+                      />
+                    ) : param.fieldType === 'boolean' ? (
+                      <FormControlLabel
+                        key={param.fieldName}
+                        control={
+                          <Checkbox
+                            checked={param.value || false}
+                            onChange={(e) => handleParameterChange(index, e.target.checked)}
+                            name={param.fieldName}
+                            color="primary"
+                          />
+                        }
+                        label={param.fieldDisplayName}
+                        sx={{ marginBottom: '10px' }}
+                      />
+                    ) : (
+                      <Box key={param.fieldName} sx={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                        <TextField
+                          label={param.fieldDisplayName}
+                          fullWidth
+                          variant="outlined"
+                          type={param.fieldType === 'int' ? 'number' : 'text'}
+                          value={param.value || ''}
+                          onChange={(e) => handleParameterChange(index, e.target.value)}
+                        />
+                        <Tooltip title="Click for examples">
+                          <IconButton onClick={() => handleHelpClick(`Examples for '${param.fieldDisplayName}'...`)}>
+                            <HelpOutlineIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    )
+                  ))}
+                  {/* Buttons */}
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                    <Button variant="contained" color="primary" onClick={handleSaveConfiguration} sx={{ marginRight: '10px' }}>
+                      Save Configuration
+                    </Button>
+                    <Button variant="outlined" color="primary" onClick={handleTryOut}>
+                      Try Out
+                    </Button>
+                  </Box>
+                </Box>
+              )
+            )}
+          </Grid>
+
+          {/* Preview panel */}
+          <Grid item xs={12} md={6}>
+            {/* Widget preview and download button */}
+          </Grid>
+        </Grid>
+
+        {/* Help Dialog */}
+        <Dialog open={helpDialogOpen} onClose={handleHelpDialogClose}>
+          <DialogTitle>
+            Parameter Help
+            <Tooltip title="Copy to clipboard">
+              <IconButton onClick={handleCopyHelpContent} sx={{ marginLeft: '10px' }}>
+                <FileCopyOutlinedIcon />
+              </IconButton>
+            </Tooltip>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body1">{helpContent}</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleHelpDialogClose} color="primary">
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar for success message */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+            Configuration saved successfully!
+          </Alert>
+        </Snackbar>
+      </Box>
+    </ThemeProvider>
+  );
+};
+
+export default App;
