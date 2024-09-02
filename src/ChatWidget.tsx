@@ -8,6 +8,7 @@ import {
   Paper,
   IconButton,
   CircularProgress,
+  Button,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import axios from 'axios';
@@ -21,10 +22,15 @@ interface ChatbotWidgetProps {
   onLoad?: () => void;
 }
 
+const generateThreadId = () => {
+  return Math.random().toString(36).substr(2, 9);
+};
+
 const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLoad }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [threadId, setThreadId] = useState<string>(generateThreadId()); // Generate initial thread ID
 
   useEffect(() => {
     if (onLoad) {
@@ -41,7 +47,10 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLoad }) => {
     setLoading(true);
 
     try {
-      const response = await axios.post('your-chat-api-url', { message: userMessage.text });
+      const response = await axios.post('your-chat-api-url', {
+        message: userMessage.text,
+        threadId: threadId, // Send thread ID with the message
+      });
       const botMessage: ChatMessage = { user: 'Bot', text: response.data.reply };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -54,11 +63,26 @@ const ChatbotWidget: React.FC<ChatbotWidgetProps> = ({ onLoad }) => {
     }
   };
 
+  const handleNewConversation = () => {
+    setMessages([]); // Clear messages
+    setThreadId(generateThreadId()); // Generate a new thread ID
+  };
+
   return (
     <Box sx={{ width: '100%', maxWidth: 400, mx: 'auto', p: 2, bgcolor: 'background.paper', borderRadius: 2 }}>
       <Typography variant="h6" gutterBottom>
         Chatbot
       </Typography>
+
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={handleNewConversation}
+        sx={{ marginBottom: '10px' }}
+      >
+        New Conversation
+      </Button>
+
       <Paper sx={{ maxHeight: 300, overflow: 'auto', p: 2, bgcolor: '#f5f5f5' }}>
         <List>
           {messages.map((message, index) => (
