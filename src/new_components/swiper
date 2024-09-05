@@ -1,0 +1,204 @@
+import React, { useState, KeyboardEvent } from 'react';
+import {
+  Box,
+  TextField,
+  Typography,
+  Button,
+  InputAdornment,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Tooltip,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import BookIcon from '@mui/icons-material/Book';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/swiper-bundle.min.css';
+import 'swiper/swiper.min.css';
+
+interface FancySearchWidgetProps {
+  apiUrl: string;
+  apiKey?: string;
+  darkMode: boolean;
+  task: 'IR' | 'RAG';
+}
+
+interface IRResult {
+  book: string;
+  presentation_context: string;
+  id: string;
+  hyperlink: string;
+}
+
+interface RAGResult {
+  generated_resp: string[];
+  citations: {
+    book: string;
+    passage_id: string;
+    hyperlink: string;
+    context: string;
+  };
+}
+
+interface Conversation {
+  query: string;
+  results: (IRResult | RAGResult)[];
+}
+
+const FancySearchWidget: React.FC<FancySearchWidgetProps> = ({
+  apiUrl,
+  apiKey = '',
+  darkMode,
+  task,
+}) => {
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  const handleSearch = async (event: KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      setLoading(true);
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({ query: searchQuery }),
+        });
+        const data = await response.json();
+        // Process the data here based on task (IR or RAG)
+        const newResults: (IRResult | RAGResult)[] = data.results || [];
+        const newConversation: Conversation = {
+          query: searchQuery,
+          results: newResults,
+        };
+        setConversations([newConversation, ...conversations]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <Box sx={{ padding: '16px', backgroundColor: darkMode ? '#1d1d1d' : '#ffffff' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Search Query"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={(event) => handleSearch(event as KeyboardEvent)}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ backgroundColor: darkMode ? '#333333' : '#f5f5f5', marginBottom: '16px' }}
+        />
+      </Box>
+
+      {loading && <div>Loading...</div>}
+
+      {conversations.map((conversation, conversationIndex) => (
+        <Box key={conversationIndex}>
+          <Chip label={conversation.query} color="primary" sx={{ marginBottom: '10px' }} />
+
+          <Swiper
+            spaceBetween={10}
+            slidesPerView={1}
+            navigation
+            pagination={{ clickable: true }}
+            style={{ paddingBottom: '20px' }}
+          >
+            {conversation.results.map((result, resultIndex) => (
+              <SwiperSlide key={resultIndex}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    marginBottom: '20px',
+                    backgroundColor: darkMode ? '#2c2c2c' : '#fff',
+                    border: darkMode ? '1px solid #424242' : '1px solid #ddd',
+                  }}
+                >
+                  <CardContent>
+                    {/* Section Title */}
+                    {task === 'IR' && (
+                      <>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 'bold', marginBottom: '10px', color: darkMode ? '#fff' : '#000' }}
+                        >
+                          {(result as IRResult).book}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          dangerouslySetInnerHTML={{
+                            __html: (result as IRResult).presentation_context,
+                          }}
+                          sx={{ color: darkMode ? '#ccc' : '#333' }}
+                        />
+                        <ReferenceLink href={(result as IRResult).hyperlink} target="_blank" rel="noopener noreferrer">
+                          <BookIcon sx={{ marginRight: '5px', fontSize: '20px' }} />
+                          {(result as IRResult).book}
+                        </ReferenceLink>
+                      </>
+                    )}
+
+                    {task === 'RAG' && (
+                      <>
+                        {(result as RAGResult).generated_resp.map((resp, respIndex) => (
+                          <Typography key={respIndex} variant="body2" sx={{ marginBottom: '10px', color: darkMode ? '#ccc' : '#333' }}>
+                            {resp}
+                          </Typography>
+                        ))}
+                        <Divider />
+                        <Typography
+                          variant="h6"
+                          sx={{ marginTop: '10px', fontWeight: 'bold', color: darkMode ? '#fff' : '#000' }}
+                        >
+                          Citations:
+                        </Typography>
+                        <Typography variant="body2" sx={{ marginBottom: '10px', color: darkMode ? '#ccc' : '#333' }}>
+                          {(result as RAGResult).citations.context}
+                        </Typography>
+                        <ReferenceLink
+                          href={(result as RAGResult).citations.hyperlink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <BookIcon sx={{ marginRight: '5px', fontSize: '20px' }} />
+                          {(result as RAGResult).citations.book}
+                        </ReferenceLink>
+                      </>
+                    )}
+
+                    <Divider sx={{ margin: '10px 0' }} />
+                  </CardContent>
+                </Card>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+export default FancySearchWidget;
+
+const ReferenceLink = styled('a')({
+  fontSize: '0.875rem',
+  color: 'grey',
+  textDecoration: 'underline',
+  display: 'flex',
+  alignItems: 'center',
+  marginTop: '10px',
+});
