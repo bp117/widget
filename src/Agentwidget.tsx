@@ -4,10 +4,9 @@ import React, { useEffect, useState } from 'react';
 interface SearchWidgetProps {
   configId: string;
   location: string;
-  triggerId: string;
 }
 
-const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location, triggerId }) => {
+const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location }) => {
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,40 +45,29 @@ const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location, t
       document.body.appendChild(script);
 
       script.onload = () => {
-        const searchWidget = document.querySelector('gen-search-widget') as any;
-        if (searchWidget) {
-          searchWidget.authToken = authToken;
-        }
+        const searchWidget = document.createElement('gen-search-widget');
+        searchWidget.setAttribute('configid', configId);
+        searchWidget.setAttribute('location', location);
+        searchWidget.authToken = authToken;
+
+        // Append the widget directly to the body
+        document.body.appendChild(searchWidget);
       };
 
       return () => {
+        // Clean up when the component is unmounted
+        const searchWidget = document.querySelector('gen-search-widget');
+        if (searchWidget) {
+          document.body.removeChild(searchWidget);
+        }
         document.body.removeChild(script);
       };
     }
-  }, [authToken]);
+  }, [authToken, configId, location]);
 
   return (
     <>
-      {/* Show loading or error message if token is not yet available */}
-      {!authToken ? (
-        <p>Loading widget...</p>
-      ) : (
-        <>
-          {/* Widget search element */}
-          <gen-search-widget 
-            configid={configId} 
-            location={location} 
-            triggerid={triggerId}>
-          </gen-search-widget>
-
-          {/* Trigger element for opening the widget */}
-          <input 
-            type="text" 
-            placeholder="Search here" 
-            id={triggerId} 
-          />
-        </>
-      )}
+      {!authToken && <p>Loading widget...</p>}
     </>
   );
 };
