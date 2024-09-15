@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-// Define the types if needed
 interface SearchWidgetProps {
   configId: string;
   location: string;
@@ -10,14 +9,14 @@ const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location })
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   useEffect(() => {
-    // Function to fetch the token from an API
+    // Function to fetch the auth token from an API
     const fetchAuthToken = async () => {
       try {
         const response = await fetch('https://your-api-endpoint.com/get-token', {
-          method: 'GET', // Or POST, based on your API
+          method: 'GET', // Or POST based on your backend API
           headers: {
             'Content-Type': 'application/json',
-            // You can include additional headers like Authorization if required
+            // Add any authorization headers if needed
           },
         });
 
@@ -32,30 +31,50 @@ const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location })
       }
     };
 
-    // Call the function to fetch the token when the component mounts
+    // Fetch the token when the component mounts
     fetchAuthToken();
   }, []);
 
   useEffect(() => {
-    // Only load the script and initialize the widget once the token is available
+    // Ensure we only proceed when the authToken is available
     if (authToken) {
+      // Load the widget script dynamically
       const script = document.createElement('script');
       script.src = "https://cloud.google.com/ai/gen-app-builder/client?hl=en_US";
       script.async = true;
-      document.body.appendChild(script);
 
       script.onload = () => {
+        // Create the widget after the script is loaded
         const searchWidget = document.createElement('gen-search-widget');
         searchWidget.setAttribute('configid', configId);
         searchWidget.setAttribute('location', location);
-        searchWidget.authToken = authToken;
 
-        // Append the widget directly to the body
+        // Append the widget to the body
         document.body.appendChild(searchWidget);
+
+        // Set the authToken safely after DOM insertion
+        setTimeout(() => {
+          if (searchWidget) {
+            (searchWidget as any).authToken = authToken;
+
+            // Simulate a click on the hidden trigger element to open the widget
+            const trigger = document.getElementById('hiddenTrigger');
+            if (trigger) {
+              trigger.click();
+            }
+          }
+        }, 100); // Short delay to ensure the widget is ready
       };
 
+      script.onerror = () => {
+        console.error('Failed to load the widget script.');
+      };
+
+      // Append the script to the body
+      document.body.appendChild(script);
+
+      // Clean up: Remove the script and widget when the component is unmounted
       return () => {
-        // Clean up when the component is unmounted
         const searchWidget = document.querySelector('gen-search-widget');
         if (searchWidget) {
           document.body.removeChild(searchWidget);
@@ -68,6 +87,11 @@ const AgentBuilderWidget: React.FC<SearchWidgetProps> = ({ configId, location })
   return (
     <>
       {!authToken && <p>Loading widget...</p>}
+
+      {/* Hidden trigger button */}
+      <button id="hiddenTrigger" style={{ display: 'none' }}>
+        Hidden Trigger
+      </button>
     </>
   );
 };
