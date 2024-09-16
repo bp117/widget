@@ -10,36 +10,32 @@ import {
   MenuItem,
   IconButton,
   TextField,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
   createTheme,
   ThemeProvider,
   CssBaseline,
-  CircularProgress,
-  Checkbox,
-  FormControlLabel,
   Snackbar,
   Alert,
   Drawer,
   Divider,
-  Switch,
 } from '@mui/material';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 
 const App: React.FC = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [parameters, setParameters] = useState<any[]>([]);
   const [useCase, setUseCase] = useState<string>('');
   const [useCases, setUseCases] = useState<string[]>([]);
   const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [widgetParams, setWidgetParams] = useState<any>({});
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
-  const [isNewSystemPrompt, setIsNewSystemPrompt] = useState<boolean>(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [useCaseId, setUseCaseId] = useState<string>('');
+  const [useCaseName, setUseCaseName] = useState<string>('');
+  const [chatbotRelatedTo, setChatbotRelatedTo] = useState<string>('');
+  const [botDescription, setBotDescription] = useState<string>('');
+  const [contentOption, setContentOption] = useState<string>('Generic'); // Radio button state
 
   const fetchUseCases = async () => {
     try {
@@ -54,114 +50,6 @@ const App: React.FC = () => {
     fetchUseCases();
   }, []);
 
-  const fetchParameters = async (template: string) => {
-    setLoading(true);
-    try {
-      const savedConfigResponse = await axios.get('http://localhost:8000/get-config', {
-        params: {
-          usecaseId: useCase,
-          graphType: template,
-        },
-      });
-
-      if (savedConfigResponse.status === 200) {
-        const savedConfig = savedConfigResponse.data;
-        const graphParams = Object.keys(savedConfig)
-          .filter(key => key !== 'usecaseId' && key !== 'graphType' && key !== '_id')
-          .map(key => ({
-            fieldName: key,
-            fieldDisplayName: savedConfig[key].fieldDisplayName || key,
-            fieldType: typeof savedConfig[key],
-            value: savedConfig[key],
-          }));
-        setParameters(graphParams);
-      } else {
-        const response = await axios.get(`your-api-url/${template}`);
-        const { graphParams } = response.data.graph_template;
-        setParameters(graphParams);
-      }
-    } catch (error) {
-      console.error('Failed to fetch parameters:', error);
-      setParameters([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTemplateClick = (template: string) => {
-    if (!useCase) {
-      setSnackbarOpen(true);
-      return;
-    }
-    setSelectedTemplate(template);
-    fetchParameters(template);
-  };
-
-  const handleParameterChange = (paramIndex: number, value: any) => {
-    setParameters((prev) => {
-      const updatedParams = [...prev];
-      updatedParams[paramIndex].value = value;
-      return updatedParams;
-    });
-  };
-
-  const handleSaveConfiguration = async () => {
-    if (!selectedTemplate || !useCase) {
-      alert('Please select a use case and a template.');
-      return;
-    }
-
-    const config = {
-      usecaseId: useCase,
-      graphType: selectedTemplate,
-      ...parameters.reduce((acc, param) => {
-        acc[param.fieldName] = param.value;
-        return acc;
-      }, {}),
-    };
-
-    try {
-      const response = await axios.post('http://localhost:8000/save-config', config);
-      if (response.data.status === 'success') {
-        alert('Configuration saved successfully!');
-      }
-    } catch (error) {
-      console.error('Failed to save configuration:', error);
-      alert('Failed to save configuration.');
-    }
-  };
-
-  const handleTryOut = () => {
-    const params = parameters.reduce((acc, param) => {
-      acc[param.fieldName] = param.value;
-      return acc;
-    }, {});
-
-    setWidgetParams({
-      ...params,
-      useCaseId: useCase,
-      graphType: selectedTemplate,
-    });
-  };
-
-  const handleScroll = (direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -300 : 300,
-        behavior: 'smooth',
-      });
-    }
-  };
-
-  const handleThemeToggle = () => {
-    setDarkMode(!darkMode);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbarOpen(false);
-  };
-
-  // Handle opening and closing of the drawer
   const handleCreateAppClick = () => {
     setDrawerOpen(true);
   };
@@ -170,18 +58,23 @@ const App: React.FC = () => {
     setDrawerOpen(false);
   };
 
-  // Handle Save in Create App Drawer and update use case dropdown
   const handleSaveApp = async () => {
-    const newUseCase = 'New Use Case'; // Get this from the form input
+    const newUseCase = { useCaseId, useCaseName, chatbotRelatedTo, botDescription, contentOption };
 
     // Add the new use case to the dropdown list
-    setUseCases((prevUseCases) => [...prevUseCases, newUseCase]);
+    setUseCases((prevUseCases) => [...prevUseCases, useCaseName]);
 
     // Close the drawer
     handleCloseDrawer();
 
+    // Reset form fields
+    setUseCaseId('');
+    setUseCaseName('');
+    setChatbotRelatedTo('');
+    setBotDescription('');
+
     // Set the new use case as the selected one
-    setUseCase(newUseCase);
+    setUseCase(useCaseName);
   };
 
   return (
@@ -212,100 +105,6 @@ const App: React.FC = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-          <IconButton onClick={() => handleScroll('left')}>
-            <ArrowBackIosNewIcon />
-          </IconButton>
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'nowrap',
-              overflowX: 'auto',
-              scrollBehavior: 'smooth',
-              width: '100%',
-              padding: '10px',
-            }}
-            ref={scrollRef}
-          >
-            <TemplateCard
-              title="Information Retrieval (IR)"
-              description="Fetch information quickly from a large dataset based on search queries."
-              darkMode={darkMode}
-              selected={selectedTemplate === 'IR'}
-              onClick={() => handleTemplateClick('IR')}
-            />
-            <TemplateCard
-              title="Retriever Augmented Generation (RAG)"
-              description="Combine retrieval of documents with generative AI to produce accurate answers."
-              darkMode={darkMode}
-              selected={selectedTemplate === 'RAG'}
-              onClick={() => handleTemplateClick('RAG')}
-            />
-            <TemplateCard
-              title="Conversational Chatbot"
-              description="Create a bot capable of engaging in natural language conversations with users."
-              darkMode={darkMode}
-              selected={selectedTemplate === 'ChatBot'}
-              onClick={() => handleTemplateClick('ChatBot')}
-            />
-          </Box>
-          <IconButton onClick={() => handleScroll('right')}>
-            <ArrowForwardIosIcon />
-          </IconButton>
-        </Box>
-
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          selectedTemplate && parameters.length > 0 && (
-            <Box sx={{ marginTop: '20px' }}>
-              <Typography variant="h6">{selectedTemplate} Parameters</Typography>
-              {parameters.map((param, index) => (
-                param.fieldType === 'boolean' ? (
-                  <FormControlLabel
-                    key={param.fieldName}
-                    control={
-                      <Checkbox
-                        checked={param.value || false}
-                        onChange={(e) => handleParameterChange(index, e.target.checked)}
-                        name={param.fieldName}
-                        color="primary"
-                      />
-                    }
-                    label={param.fieldDisplayName}
-                    sx={{ marginBottom: '10px' }}
-                  />
-                ) : (
-                  <Box key={param.fieldName} sx={{ marginBottom: '20px' }}>
-                    <TextField
-                      label={param.fieldDisplayName}
-                      fullWidth
-                      variant="outlined"
-                      type={param.fieldType === 'int' ? 'number' : 'text'}
-                      value={param.value || ''}
-                      onChange={(e) => handleParameterChange(index, e.target.value)}
-                    />
-                    <Typography variant="caption" sx={{ color: 'grey' }}>
-                      Help text for {param.fieldDisplayName}
-                    </Typography>
-                  </Box>
-                )
-              ))}
-            </Box>
-          )
-        )}
-
-        <Box sx={{ marginTop: '20px' }}>
-          <Button variant="contained" color="primary" onClick={handleSaveConfiguration} sx={{ marginRight: '10px' }}>
-            Save Configuration
-          </Button>
-          <Button variant="outlined" color="primary" onClick={handleTryOut}>
-            Try Out
-          </Button>
-        </Box>
-
         {/* Full-screen Drawer for Create App */}
         <Drawer
           anchor="bottom"
@@ -325,83 +124,91 @@ const App: React.FC = () => {
           <Divider sx={{ marginBottom: '20px' }} />
 
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Use Case ID" variant="outlined" />
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Use Case ID"
+                variant="outlined"
+                value={useCaseId}
+                onChange={(e) => setUseCaseId(e.target.value)}
+              />
               <Typography variant="caption" sx={{ color: 'grey' }}>
                 A unique identifier for the use case.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Use Case Name" variant="outlined" />
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Use Case Name"
+                variant="outlined"
+                value={useCaseName}
+                onChange={(e) => setUseCaseName(e.target.value)}
+              />
               <Typography variant="caption" sx={{ color: 'grey' }}>
                 A descriptive name for the use case.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Model</InputLabel>
-                <Select label="Model">
-                  <MenuItem value="model1">Model 1</MenuItem>
-                  <MenuItem value="model2">Model 2</MenuItem>
-                  <MenuItem value="model3">Model 3</MenuItem>
-                </Select>
-              </FormControl>
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                Choose the model used for this app.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth variant="outlined">
-                <InputLabel>Embedding Model</InputLabel>
-                <Select label="Embedding Model">
-                  <MenuItem value="embedding1">Embedding Model 1</MenuItem>
-                  <MenuItem value="embedding2">Embedding Model 2</MenuItem>
-                  <MenuItem value="embedding3">Embedding Model 3</MenuItem>
-                </Select>
-              </FormControl>
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                Choose the embedding model for vectorization.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="System Prompt ID" variant="outlined" />
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                A unique identifier for the system prompt.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="System Prompt Name" variant="outlined" />
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                A descriptive name for the system prompt.
-              </Typography>
-            </Grid>
+
+            {/* Content Option with Radio Buttons */}
             <Grid item xs={12}>
-              <TextField fullWidth multiline rows={4} label="System Prompt (User)" variant="outlined" />
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                The user-facing prompt that will be used in the system.
-              </Typography>
+              <Typography variant="h6">Content</Typography>
+              <RadioGroup
+                value={contentOption}
+                onChange={(e) => setContentOption(e.target.value)}
+              >
+                <FormControlLabel
+                  value="Generic"
+                  control={<Radio />}
+                  label={
+                    <>
+                      <Typography variant="body1">Generic</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Powerful search out-of-the-box, utilizing advanced AI for accurate, intent-focused search results.
+                      </Typography>
+                    </>
+                  }
+                />
+                <FormControlLabel
+                  value="Media"
+                  control={<Radio />}
+                  label={
+                    <>
+                      <Typography variant="body1">Media</Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        Search tailored for consumer-focused media platforms, like audio or video streaming and digital publishing. Media search leverages user interactions for content discovery.
+                      </Typography>
+                    </>
+                  }
+                />
+              </RadioGroup>
             </Grid>
+
             <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch checked={isNewSystemPrompt} onChange={() => setIsNewSystemPrompt(!isNewSystemPrompt)} />
-                }
-                label="Is New System Prompt"
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="This chatbot can answer questions related to"
+                variant="outlined"
+                value={chatbotRelatedTo}
+                onChange={(e) => setChatbotRelatedTo(e.target.value)}
               />
               <Typography variant="caption" sx={{ color: 'grey' }}>
-                Toggle to mark if this is a new system prompt.
+                Provide a brief description of what topics this chatbot can answer.
               </Typography>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Prompt ID" variant="outlined" />
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="How this bot works and responds"
+                variant="outlined"
+                value={botDescription}
+                onChange={(e) => setBotDescription(e.target.value)}
+              />
               <Typography variant="caption" sx={{ color: 'grey' }}>
-                A unique identifier for the prompt.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField fullWidth label="Prompt Name" variant="outlined" />
-              <Typography variant="caption" sx={{ color: 'grey' }}>
-                A descriptive name for the prompt.
+                Explain how the bot works and how it processes and responds to user questions.
               </Typography>
             </Grid>
           </Grid>
@@ -416,10 +223,10 @@ const App: React.FC = () => {
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={3000}
-          onClose={handleSnackbarClose}
+          onClose={() => setSnackbarOpen(false)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={handleSnackbarClose} severity="error">
+          <Alert onClose={() => setSnackbarOpen(false)} severity="error">
             Please select a use case before choosing a template!
           </Alert>
         </Snackbar>
