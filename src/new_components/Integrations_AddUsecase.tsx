@@ -1,4 +1,4 @@
-import React, { useState, useRef, Suspense } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -26,24 +26,21 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import TemplateCard from './TemplateCard';
-import FancySearchWidget from './FancySearchWidget';
 import axios from 'axios';
 
 const App: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [parameters, setParameters] = useState<any[]>([]);
   const [useCase, setUseCase] = useState<string>('');
-  const [useCases, setUseCases] = useState<string[]>([]); // State for use case dropdown list
+  const [useCases, setUseCases] = useState<string[]>([]);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [widgetParams, setWidgetParams] = useState<any>({});
-  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false); // Snackbar state
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(false); // Drawer state
-  const [isNewSystemPrompt, setIsNewSystemPrompt] = useState<boolean>(false); // Switch state
+  const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [isNewSystemPrompt, setIsNewSystemPrompt] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Fetch initial use case data
   const fetchUseCases = async () => {
     try {
       const response = await axios.get('http://localhost:8000/get-usecases');
@@ -53,8 +50,7 @@ const App: React.FC = () => {
     }
   };
 
-  // Initial fetch of use cases
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUseCases();
   }, []);
 
@@ -176,7 +172,6 @@ const App: React.FC = () => {
 
   // Handle Save in Create App Drawer and update use case dropdown
   const handleSaveApp = async () => {
-    // Mock new use case (replace this with your API call to create a new use case)
     const newUseCase = 'New Use Case'; // Get this from the form input
 
     // Add the new use case to the dropdown list
@@ -185,7 +180,7 @@ const App: React.FC = () => {
     // Close the drawer
     handleCloseDrawer();
 
-    // Optionally, set the new use case as the selected one
+    // Set the new use case as the selected one
     setUseCase(newUseCase);
   };
 
@@ -210,7 +205,7 @@ const App: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={4} sx={{ textAlign: 'right' }}>
+          <Grid item xs={4} sx={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end' }}>
             <Button variant="contained" startIcon={<AddIcon />} onClick={handleCreateAppClick}>
               Create App
             </Button>
@@ -283,16 +278,19 @@ const App: React.FC = () => {
                     sx={{ marginBottom: '10px' }}
                   />
                 ) : (
-                  <TextField
-                    key={param.fieldName}
-                    label={param.fieldDisplayName}
-                    fullWidth
-                    variant="outlined"
-                    type={param.fieldType === 'int' ? 'number' : 'text'}
-                    value={param.value || ''}
-                    onChange={(e) => handleParameterChange(index, e.target.value)}
-                    sx={{ marginBottom: '10px' }}
-                  />
+                  <Box key={param.fieldName} sx={{ marginBottom: '20px' }}>
+                    <TextField
+                      label={param.fieldDisplayName}
+                      fullWidth
+                      variant="outlined"
+                      type={param.fieldType === 'int' ? 'number' : 'text'}
+                      value={param.value || ''}
+                      onChange={(e) => handleParameterChange(index, e.target.value)}
+                    />
+                    <Typography variant="caption" sx={{ color: 'grey' }}>
+                      Help text for {param.fieldDisplayName}
+                    </Typography>
+                  </Box>
                 )
               ))}
             </Box>
@@ -308,13 +306,13 @@ const App: React.FC = () => {
           </Button>
         </Box>
 
-        {/* Drawer for Create App */}
+        {/* Full-screen Drawer for Create App */}
         <Drawer
           anchor="bottom"
           open={drawerOpen}
           onClose={handleCloseDrawer}
           PaperProps={{
-            sx: { padding: '20px', height: '60vh', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' },
+            sx: { padding: '20px', height: '100vh', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' },
           }}
           transitionDuration={400}
         >
@@ -329,9 +327,15 @@ const App: React.FC = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Use Case ID" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A unique identifier for the use case.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Use Case Name" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A descriptive name for the use case.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
@@ -342,6 +346,9 @@ const App: React.FC = () => {
                   <MenuItem value="model3">Model 3</MenuItem>
                 </Select>
               </FormControl>
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                Choose the model used for this app.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth variant="outlined">
@@ -352,15 +359,27 @@ const App: React.FC = () => {
                   <MenuItem value="embedding3">Embedding Model 3</MenuItem>
                 </Select>
               </FormControl>
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                Choose the embedding model for vectorization.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="System Prompt ID" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A unique identifier for the system prompt.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="System Prompt Name" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A descriptive name for the system prompt.
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth multiline rows={4} label="System Prompt (User)" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                The user-facing prompt that will be used in the system.
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <FormControlLabel
@@ -369,12 +388,21 @@ const App: React.FC = () => {
                 }
                 label="Is New System Prompt"
               />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                Toggle to mark if this is a new system prompt.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Prompt ID" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A unique identifier for the prompt.
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Prompt Name" variant="outlined" />
+              <Typography variant="caption" sx={{ color: 'grey' }}>
+                A descriptive name for the prompt.
+              </Typography>
             </Grid>
           </Grid>
 
