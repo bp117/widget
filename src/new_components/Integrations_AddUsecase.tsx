@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [parameters, setParameters] = useState<any[]>([]);
   const [useCase, setUseCase] = useState<string>('');
+  const [useCases, setUseCases] = useState<string[]>([]); // State for use case dropdown list
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [widgetParams, setWidgetParams] = useState<any>({});
@@ -41,6 +42,21 @@ const App: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false); // Drawer state
   const [isNewSystemPrompt, setIsNewSystemPrompt] = useState<boolean>(false); // Switch state
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Fetch initial use case data
+  const fetchUseCases = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/get-usecases');
+      setUseCases(response.data.useCases);
+    } catch (error) {
+      console.error('Failed to fetch use cases:', error);
+    }
+  };
+
+  // Initial fetch of use cases
+  React.useEffect(() => {
+    fetchUseCases();
+  }, []);
 
   const fetchParameters = async (template: string) => {
     setLoading(true);
@@ -158,6 +174,21 @@ const App: React.FC = () => {
     setDrawerOpen(false);
   };
 
+  // Handle Save in Create App Drawer and update use case dropdown
+  const handleSaveApp = async () => {
+    // Mock new use case (replace this with your API call to create a new use case)
+    const newUseCase = 'New Use Case'; // Get this from the form input
+
+    // Add the new use case to the dropdown list
+    setUseCases((prevUseCases) => [...prevUseCases, newUseCase]);
+
+    // Close the drawer
+    handleCloseDrawer();
+
+    // Optionally, set the new use case as the selected one
+    setUseCase(newUseCase);
+  };
+
   return (
     <ThemeProvider theme={createTheme({ palette: { mode: darkMode ? 'dark' : 'light' } })}>
       <CssBaseline />
@@ -171,9 +202,11 @@ const App: React.FC = () => {
                 onChange={(e) => setUseCase(e.target.value as string)}
                 label="Use Case"
               >
-                <MenuItem value="useCase1">Use Case 1</MenuItem>
-                <MenuItem value="useCase2">Use Case 2</MenuItem>
-                <MenuItem value="useCase3">Use Case 3</MenuItem>
+                {useCases.map((useCaseOption, index) => (
+                  <MenuItem key={index} value={useCaseOption}>
+                    {useCaseOption}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -275,61 +308,6 @@ const App: React.FC = () => {
           </Button>
         </Box>
 
-        <Grid item xs={12} md={6}>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              backgroundColor: darkMode ? '#1d1d1d' : '#ffffff',
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
-            }}
-          >
-            <Typography variant="h5" sx={{ marginBottom: '20px' }}>
-              Widget Preview
-            </Typography>
-
-            <Box
-              sx={{
-                width: '100%',
-                maxHeight: '300px',
-                backgroundColor: darkMode ? '#1d1d1d' : '#ffffff',
-                border: `1px solid ${darkMode ? '#424242' : '#ddd'}`,
-                borderRadius: '8px',
-                marginBottom: '20px',
-                padding: '20px',
-                overflow: 'auto',
-                color: darkMode ? '#ffffff' : '#000000',
-              }}
-            >
-              {selectedTemplate === 'IR' || selectedTemplate === 'RAG' ? (
-                <FancySearchWidget
-                  apiUrl="your-api-url-here"
-                  task={selectedTemplate === 'IR' ? 'IR' : 'RAG'}
-                  useCaseId={useCase}
-                  promptId="your-prompt-id-here"
-                  apiKey="your-api-key-here"
-                  darkMode={darkMode}
-                  {...widgetParams}
-                />
-              ) : (
-                <Typography variant="body1" sx={{ padding: '20px', textAlign: 'center' }}>
-                  Select a template to preview
-                </Typography>
-              )}
-            </Box>
-
-            <Button variant="contained" color="primary" onClick={() => {}}>
-              Download Widget
-            </Button>
-          </Box>
-        </Grid>
-
         {/* Drawer for Create App */}
         <Drawer
           anchor="bottom"
@@ -401,7 +379,7 @@ const App: React.FC = () => {
           </Grid>
 
           <Box sx={{ marginTop: '20px', textAlign: 'right' }}>
-            <Button variant="contained" onClick={handleCloseDrawer}>
+            <Button variant="contained" onClick={handleSaveApp}>
               Save
             </Button>
           </Box>
