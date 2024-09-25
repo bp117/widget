@@ -1,0 +1,14 @@
+Here’s an abstract for your lightning talk on "Building DIY RAG on Studio":
+
+
+---
+
+Abstract:
+
+In this lightning talk, we explore the journey of building DIY Retrieval-Augmented Generation (RAG) capabilities on Studio, enabling a self-serve approach to integrating generative AI with custom data sources. RAG combines the strengths of retrieval mechanisms and large language models to enhance the relevance and accuracy of AI-generated responses. This session will cover how to build a RAG pipeline from data ingestion to deployment, including key design decisions, challenges faced, and lessons learned. Attendees will gain insights into creating a scalable, efficient, and customizable RAG workflow that empowers teams to integrate their own data into generative AI models for specialized use cases.
+
+
+---
+
+Let me know if you'd like to modify or expand any sections!
+
