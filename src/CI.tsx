@@ -1,28 +1,34 @@
 import React, { useState } from 'react';
 
-interface Message {
-  text: string;
-  sender: 'user' | 'bot';
-}
-
-const ChatInterface = ({ setCitations }: { setCitations: (citations: string[]) => void }) => {
+const ChatInterface = ({ setCitations }: { setCitations: (citations: any[]) => void }) => {
   const [message, setMessage] = useState('');
-  const [conversation, setConversation] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<any[]>([]);
 
   const handleSendMessage = () => {
     if (message.trim() === '') return;
 
-    const userMessage = { text: message, sender: 'user' } as Message;
+    const userMessage = { text: message, sender: 'user' };
     setConversation((prev) => [...prev, userMessage]);
 
     // Simulate bot response
-    const botMessage = { text: 'In 2023, JPMorgan Chase reported an annual revenue of $155.29 billion...', sender: 'bot' } as Message;
+    const botMessage = { text: 'In 2023, JPMorgan Chase reported an annual revenue of $155.29 billion...', sender: 'bot' };
     setTimeout(() => {
       setConversation((prev) => [...prev, botMessage]);
-      setCitations([
-        'Holistic Evaluation of Language Models Percy Liang, Rishi Bommasani...',
-        'More sophisticated prompting methods could potentially lead to different findings...',
-      ]);
+      
+      const citationsData = [
+        {
+          text: "Holistic Evaluation of Language Models Percy Liang, Rishi Bommasani...",
+          source: "Holistic Evaluation of Language Models",
+          url: "https://example.com/page-3-wf.txt",
+        },
+        {
+          text: "More sophisticated prompting methods could potentially lead to different findings...",
+          source: "Standardization of Model Evaluation",
+          url: "https://example.com/standardization-model-eval.txt",
+        }
+      ];
+      
+      setCitations(citationsData);
     }, 1000); // simulate response delay
 
     setMessage(''); // clear input
