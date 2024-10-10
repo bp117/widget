@@ -6,7 +6,15 @@ interface Message {
   tokens?: number;
   latency?: string;
 }
+  {/* Download App Button - Fixed in the top right */}
+      <div className="absolute top-4 right-4">
+        <button className="bg-gray-200 px-4 py-2">Download App</button>
+      </div>
 
+      {/* Publish Button - Fixed at the bottom */}
+      <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+        <button className="bg-blue-500 text-white px-6 py-2">Publish</button>
+      </div>
 const ChatInterface = ({ setCitationsVisible }: { setCitationsVisible: (visible: boolean) => void }) => {
   const [message, setMessage] = useState('');
   const [conversation, setConversation] = useState<Message[]>([]);
