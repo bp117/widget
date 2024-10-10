@@ -10,6 +10,38 @@ interface Message {
 const ChatInterface = ({ setCitationsVisible }: { setCitationsVisible: (visible: boolean) => void }) => {
   const [message, setMessage] = useState('');
   const [conversation, setConversation] = useState<Message[]>([]);
+const citations = [
+  {
+    text: "The company reported net revenue of $155.29 billion for the fiscal year 2023.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: Financial Highlights",
+    url: "https://example.com/jpm-10k-2023-financials",
+  },
+  {
+    text: "Risk factors include significant exposure to market risks such as interest rate fluctuations and geopolitical instability.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: Risk Factors",
+    url: "https://example.com/jpm-10k-2023-risk-factors",
+  },
+  {
+    text: "The management emphasizes the strong liquidity position, with over $1.5 trillion in assets as of year-end.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: MD&A",
+    url: "https://example.com/jpm-10k-2023-mda-liquidity",
+  },
+  {
+    text: "Legal proceedings related to regulatory investigations are ongoing with respect to compliance with anti-money laundering laws.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: Legal Proceedings",
+    url: "https://example.com/jpm-10k-2023-legal-proceedings",
+  },
+  {
+    text: "The company's effective tax rate decreased to 18.3% for the year, primarily due to changes in the corporate tax structure.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: Financial Statements, Note 14 - Income Taxes",
+    url: "https://example.com/jpm-10k-2023-tax-rate",
+  },
+  {
+    text: "JPMorgan Chase continues its digital transformation efforts with an annual IT investment of over $12 billion.",
+    source: "10-K Annual Report, JPMorgan Chase, Section: MD&A - Digital Transformation",
+    url: "https://example.com/jpm-10k-2023-digital-transformation",
+  }
+];
 
   const handleSendMessage = () => {
     if (message.trim() === '') return;
