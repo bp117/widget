@@ -8,9 +8,14 @@ type Citation = {
 
 type CitationsProps = {
   citations: Citation[];
+  visible: boolean;
 };
 
-const Citations = ({ citations }: CitationsProps) => {
+const Citations = ({ citations, visible }: CitationsProps) => {
+  if (!visible) {
+    return null; // Hide the citations section if not visible
+  }
+
   return (
     <div className="p-6 bg-gray-50 h-screen w-1/3 flex flex-col">
       <button className="bg-gray-200 px-4 py-2 mb-4">Download App</button>
